@@ -1,0 +1,747 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/blog/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/blog/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/blog/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="EVE,游戏,数据库,MySQL,关系型数据库," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/blog/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="玩过很多的游戏，但是一直觉得EVE的各种系统都非常神奇。特别是物品系统，几乎所有东西都抽象成了“物品”，然后共用一种数据结构。例如舰船，蓝图，装备，技能书，矿物，都是“物品”，统统可以躺在道具栏里面。所以多种数据结构都抽象为一种是如何实现的呢？这套系统具有很大的可扩展性，非常有参考价值。
+相关资料首先谷歌搜索“EVE data dump”，得到了这些资源">
+<meta property="og:type" content="article">
+<meta property="og:title" content="EVE数据库分析">
+<meta property="og:url" content="http://indwar.pw/2016/05/07/EVE_database/index.html">
+<meta property="og:site_name" content="xmrg">
+<meta property="og:description" content="玩过很多的游戏，但是一直觉得EVE的各种系统都非常神奇。特别是物品系统，几乎所有东西都抽象成了“物品”，然后共用一种数据结构。例如舰船，蓝图，装备，技能书，矿物，都是“物品”，统统可以躺在道具栏里面。所以多种数据结构都抽象为一种是如何实现的呢？这套系统具有很大的可扩展性，非常有参考价值。
+相关资料首先谷歌搜索“EVE data dump”，得到了这些资源">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462589602.0394065.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462589375.9074225.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462589763.336045.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462590677.5430315.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462590801.4934943.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462591004.7091272.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462590865.2613533.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462591247.6530037.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462591370.9061599.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462591869.2072372.png">
+<meta property="og:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462592035.8127825.png">
+<meta property="og:updated_time" content="2016-05-28T02:28:26.216Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="EVE数据库分析">
+<meta name="twitter:description" content="玩过很多的游戏，但是一直觉得EVE的各种系统都非常神奇。特别是物品系统，几乎所有东西都抽象成了“物品”，然后共用一种数据结构。例如舰船，蓝图，装备，技能书，矿物，都是“物品”，统统可以躺在道具栏里面。所以多种数据结构都抽象为一种是如何实现的呢？这套系统具有很大的可扩展性，非常有参考价值。
+相关资料首先谷歌搜索“EVE data dump”，得到了这些资源">
+<meta name="twitter:image" content="https://o6fgi45oe.qnssl.com/2016_05_07/1462589602.0394065.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> EVE数据库分析 | xmrg </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/blog/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">xmrg</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">博客</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                EVE数据库分析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-07T11:45:53+08:00" content="2016-05-07">
+              2016-05-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/blog/2016/05/07/EVE_database/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/07/EVE_database/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+              &nbsp; | &nbsp;
+              <span class="page-pv"><i class="fa fa-file-o"></i>
+              <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+              </span>
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>玩过很多的游戏，但是一直觉得EVE的各种系统都非常神奇。特别是物品系统，几乎所有东西都抽象成了“物品”，然后共用一种数据结构。例如舰船，蓝图，装备，技能书，矿物，都是“物品”，统统可以躺在道具栏里面。所以多种数据结构都抽象为一种是如何实现的呢？这套系统具有很大的可扩展性，非常有参考价值。</p>
+<h1 id="相关资料"><a href="#相关资料" class="headerlink" title="相关资料"></a>相关资料</h1><p>首先谷歌搜索“EVE data dump”，得到了这些资源</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462589602.0394065.png" alt="2016_05_07/1462589602.0394065.png"></p>
+<a id="more"></a>
+<p>然后下载了一份PDF，里面有EVE 的数据库的数据关系图：</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462589375.9074225.png" alt="2016_05_07/1462589375.9074225.png"></p>
+<p>粗略一看，还是比较复杂的。但是我又找到了<a href="https://k162space.com/2012/04/13/working-with-eve-static-data/" target="_blank" rel="external">一篇文章</a>讲解数据库的结构。</p>
+<p>下载了其中的数据表（SQLite格式）：</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462589763.336045.png" alt="2016_05_07/1462589763.336045.png"></p>
+<h1 id="数据表分析"><a href="#数据表分析" class="headerlink" title="数据表分析"></a>数据表分析</h1><table>
+<thead>
+<tr>
+<th>数据表前缀</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>agt</td>
+<td style="text-align:center">all about agents both mission and research</td>
+</tr>
+<tr>
+<td>chr</td>
+<td style="text-align:center">character information such as bloodlines, factions, and races</td>
+</tr>
+<tr>
+<td>crp</td>
+<td style="text-align:center">NPC corporation divisions</td>
+</tr>
+<tr>
+<td>crt</td>
+<td style="text-align:center">certificates</td>
+</tr>
+<tr>
+<td>dmg</td>
+<td style="text-align:center">damage attributes, effects, dogma (attribute system)</td>
+</tr>
+<tr>
+<td>eve</td>
+<td style="text-align:center">basic information for icons and units</td>
+</tr>
+<tr>
+<td>inv</td>
+<td style="text-align:center">market groups, item details, item reactions. I do a lot of work with these tables</td>
+</tr>
+<tr>
+<td>map</td>
+<td style="text-align:center">xyz data, landmarks, regions, solar systems connections, and general universe data</td>
+</tr>
+<tr>
+<td>planet</td>
+<td style="text-align:center">planetary interaction schematics</td>
+</tr>
+<tr>
+<td>ram</td>
+<td style="text-align:center">industry, manufacturing, refine</td>
+</tr>
+<tr>
+<td>sta</td>
+<td style="text-align:center">station services, xyz docking locations</td>
+</tr>
+<tr>
+<td>trn</td>
+<td style="text-align:center">multilingual stuff</td>
+</tr>
+<tr>
+<td>war</td>
+<td style="text-align:center">faction warfare</td>
+</tr>
+</tbody>
+</table>
+<p>所以物品系统是inv前缀，而参数相关的是dmg前缀。查看相关的数据表，会发现invItem就是记录世界中每一个物品。</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462590677.5430315.png" alt="2016_05_07/1462590677.5430315.png"></p>
+<p>Item使用type来指定物品的类型。type就是物品系统的核心。</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462590801.4934943.png" alt="2016_05_07/1462590801.4934943.png"></p>
+<p>记录了物品的质量，体积……等等基础通用的信息。</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462591004.7091272.png" alt="2016_05_07/1462591004.7091272.png"></p>
+<p>而组则是物品的小分类。例如“挖矿激光器”和“炮台”这种分类。而这些都属于“舰船装备”这个大分类。</p>
+<p>物品的大分类，则用于判断物品实际在游戏中的逻辑。例如蓝图可以用来生产制造，装备可以装配到飞船上，等等。</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462590865.2613533.png" alt="2016_05_07/1462590865.2613533.png"></p>
+<p>这样就实现了一种数据结构，都能对物品进行分类，处理不同的逻辑。</p>
+<h1 id="物品参数字段各不相同？"><a href="#物品参数字段各不相同？" class="headerlink" title="物品参数字段各不相同？"></a>物品参数字段各不相同？</h1><p>但是上面也只是说到了分类。那么各种不同的装备有不同字段的参数，这种逻辑如何实现呢？查看相关的dgm数据表：</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462591247.6530037.png" alt="2016_05_07/1462591247.6530037.png"></p>
+<p>这样看很抽象，从一个具体的物品type来分析吧。</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462591370.9061599.png" alt="2016_05_07/1462591370.9061599.png"></p>
+<p>选择typeid为440的5MN 微型跃迁推进器</p>
+<p>好吧……我翻了一下，数据表不完整，dgmTypeAttributes没有440这个typeid。但是在dgmTypeEffects里面找到了。</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462591869.2072372.png" alt="2016_05_07/1462591869.2072372.png"></p>
+<p>对应去找effectID里面的13,16,58,710,712,1254,3175</p>
+<p><img src="https://o6fgi45oe.qnssl.com/2016_05_07/1462592035.8127825.png" alt="2016_05_07/1462592035.8127825.png"></p>
+<p>13说明这个装备需要中槽。</p>
+<p>其他一些也只是说明了这个装备的参数……没有仔细看了。翻了一下dgmEffects表，发现各种参数茫茫多。。。EVE真是一个非常复杂的游戏。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/EVE/" rel="tag">#EVE</a>
+          
+            <a href="/blog/tags/游戏/" rel="tag">#游戏</a>
+          
+            <a href="/blog/tags/数据库/" rel="tag">#数据库</a>
+          
+            <a href="/blog/tags/MySQL/" rel="tag">#MySQL</a>
+          
+            <a href="/blog/tags/关系型数据库/" rel="tag">#关系型数据库</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2016/05/04/using-vsftpd/" rel="next" title="使用vsftpd搭建ftp服务器">
+                <i class="fa fa-chevron-left"></i> 使用vsftpd搭建ftp服务器
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2016/05/27/Javascript_prototype/" rel="prev" title="Javascript原型链">
+                Javascript原型链 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/07/EVE_database/"
+           data-title="EVE数据库分析" data-url="http://indwar.pw/blog/2016/05/07/EVE_database/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/blog/images/avatar.png"
+               alt="码日光" />
+          <p class="site-author-name" itemprop="name">码日光</p>
+          <p class="site-description motion-element" itemprop="description">industry War 首席开发者</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/blog/archives">
+              <span class="site-state-item-count">11</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/blog/tags">
+                <span class="site-state-item-count">29</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/tiaod" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/1679788655" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xmrg" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#相关资料"><span class="nav-number">1.</span> <span class="nav-text">相关资料</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#数据表分析"><span class="nav-number">2.</span> <span class="nav-text">数据表分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#物品参数字段各不相同？"><span class="nav-number">3.</span> <span class="nav-text">物品参数字段各不相同？</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">码日光</span>
+</div>
+<!--
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+-->
+
+        
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/blog/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/blog/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/blog/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/blog/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/blog/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/blog/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xm-rg"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+
+</body>
+</html>
